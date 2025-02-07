@@ -3,15 +3,20 @@ document.addEventListener("DOMContentLoaded", function () {
   let correctCount = 0;
   let wrongCount = 0;
 
+  const questionElement = document.getElementById("question");
+  const answersList = document.getElementById("answers");
+  const resultElement = document.getElementById("result");
+  const scoreElement = document.getElementById("score");
+  const retryButton = document.getElementById("retry");
+
   // جلب البيانات من ملف JSON
   fetch("data.json")
     .then((response) => response.json())
     .then((data) => {
       // عرض السؤال
-      document.getElementById("question").textContent = data.question;
+      questionElement.textContent = data.question;
 
       // عرض الإجابات
-      const answersList = document.getElementById("answers");
       data.answers.forEach((answer) => {
         const li = document.createElement("li");
         li.textContent = answer;
@@ -23,7 +28,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // دالة للتحقق من الإجابة
   function checkAnswer(selectedAnswer, correctAnswer, clickedElement) {
-    const resultElement = document.getElementById("result");
     if (selectedAnswer === correctAnswer) {
       resultElement.textContent = "إجابة صحيحة! 🎉";
       resultElement.style.color = "green";
@@ -36,14 +40,38 @@ document.addEventListener("DOMContentLoaded", function () {
       wrongCount++;
     }
 
-    // تحديث عدد الإجابات الصحيحة والخاطئة
-    document.getElementById("correctCount").textContent = correctCount;
-    document.getElementById("wrongCount").textContent = wrongCount;
+    // تحديث النتيجة
+    scoreElement.textContent = `الإجابات الصحيحة: ${correctCount} | الإجابات الخاطئة: ${wrongCount}`;
 
     // تعطيل النقر على الإجابات بعد اختيار إجابة
     const answers = document.querySelectorAll("#answers li");
     answers.forEach((answer) => {
       answer.style.pointerEvents = "none";
     });
+
+    // إظهار زر إعادة المحاولة
+    retryButton.style.display = "block";
   }
+
+  // إعادة المحاولة
+  retryButton.addEventListener("click", () => {
+    // إعادة تعيين النتيجة
+    correctCount = 0;
+    wrongCount = 0;
+    scoreElement.textContent = `الإجابات الصحيحة: ${correctCount} | الإجابات الخاطئة: ${wrongCount}`;
+
+    // إعادة تعيين النتيجة والرسالة
+    resultElement.textContent = "";
+    resultElement.style.color = "";
+
+    // إعادة تعيين الإجابات
+    const answers = document.querySelectorAll("#answers li");
+    answers.forEach((answer) => {
+      answer.style.pointerEvents = "auto";
+      answer.classList.remove("correct", "wrong");
+    });
+
+    // إخفاء زر إعادة المحاولة
+    retryButton.style.display = "none";
+  });
 });
