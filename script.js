@@ -1,77 +1,62 @@
 // تأكد من أن الصفحة قد تم تحميلها بالكامل
 document.addEventListener("DOMContentLoaded", function () {
-  let correctCount = 0;
-  let wrongCount = 0;
-
-  const questionElement = document.getElementById("question");
-  const answersList = document.getElementById("answers");
+  const bashar = document.getElementById("bashar");
+  const shoe = document.getElementById("shoe");
+  const throwButton = document.getElementById("throwButton");
   const resultElement = document.getElementById("result");
-  const scoreElement = document.getElementById("score");
-  const retryButton = document.getElementById("retry");
 
-  // جلب البيانات من ملف JSON
-  fetch("data.json")
-    .then((response) => response.json())
-    .then((data) => {
-      // عرض السؤال
-      questionElement.textContent = data.question;
+  let basharPosition = 250; // الموضع الأفقي لبشار
+  let shoePosition = -30; // الموضع الرأسي للحذاء
+  let isShoeThrown = false;
+  let attempts = 0;
+  const maxAttempts = 5;
 
-      // عرض الإجابات
-      data.answers.forEach((answer) => {
-        const li = document.createElement("li");
-        li.textContent = answer;
-        li.addEventListener("click", () => checkAnswer(answer, data.correctAnswer, li));
-        answersList.appendChild(li);
-      });
-    })
-    .catch((error) => console.error("حدث خطأ أثناء جلب البيانات:", error));
-
-  // دالة للتحقق من الإجابة
-  function checkAnswer(selectedAnswer, correctAnswer, clickedElement) {
-    if (selectedAnswer === correctAnswer) {
-      resultElement.textContent = "إجابة صحيحة! 🎉";
-      resultElement.style.color = "green";
-      clickedElement.classList.add("correct");
-      correctCount++;
-    } else {
-      resultElement.textContent = "إجابة خاطئة! ❌";
-      resultElement.style.color = "red";
-      clickedElement.classList.add("wrong");
-      wrongCount++;
-    }
-
-    // تحديث النتيجة
-    scoreElement.textContent = `الإجابات الصحيحة: ${correctCount} | الإجابات الخاطئة: ${wrongCount}`;
-
-    // تعطيل النقر على الإجابات بعد اختيار إجابة
-    const answers = document.querySelectorAll("#answers li");
-    answers.forEach((answer) => {
-      answer.style.pointerEvents = "none";
-    });
-
-    // إظهار زر إعادة المحاولة
-    retryButton.style.display = "block";
+  // تحريك بشار يمينًا ويسارًا
+  function moveBashar() {
+    const direction = Math.random() > 0.5 ? 1 : -1; // 1 لليمين، -1 لليسار
+    basharPosition += direction * 50; // تحريك بشار بمقدار 50 بكسل
+    basharPosition = Math.max(0, Math.min(500, basharPosition)); // التأكد من أن بشار لا يخرج عن الحدود
+    bashar.style.left = `${basharPosition}px`;
   }
 
-  // إعادة المحاولة
-  retryButton.addEventListener("click", () => {
-    // إعادة تعيين النتيجة
-    correctCount = 0;
-    wrongCount = 0;
-    scoreElement.textContent = `الإجابات الصحيحة: ${correctCount} | الإجابات الخاطئة: ${wrongCount}`;
+  // رمي الحذاء
+  function throwShoe() {
+    if (isShoeThrown) return; // منع رمي الحذاء أكثر من مرة في نفس الوقت
+    isShoeThrown = true;
+    attempts++;
+    shoePosition = 0; // إظهار الحذاء
+    shoe.style.bottom = `${shoePosition}px`;
 
-    // إعادة تعيين النتيجة والرسالة
-    resultElement.textContent = "";
-    resultElement.style.color = "";
+    // تحريك الحذاء للأعلى
+    const shoeInterval = setInterval(() => {
+      shoePosition += 5;
+      shoe.style.bottom = `${shoePosition}px`;
 
-    // إعادة تعيين الإجابات
-    const answers = document.querySelectorAll("#answers li");
-    answers.forEach((answer) => {
-      answer.style.pointerEvents = "auto";
-      answer.classList.remove("correct", "wrong");
-    });
+      // التحقق من الاصطدام ببشار
+      if (shoePosition >= 80 && shoePosition <= 100 && Math.abs(basharPosition - 250) < 50) {
+        clearInterval(shoeInterval);
+        resultElement.textContent = "أصبت بشار! 🎉";
+        throwButton.disabled = true;
+      }
 
-    // إخفاء زر إعادة المحاولة
-    retryButton.style.display = "none";
-  });
+      // إذا وصل الحذاء إلى الأعلى ولم يصب بشار
+      if (shoePosition >= 400) {
+        clearInterval(shoeInterval);
+        isShoeThrown = false;
+        shoePosition = -30;
+        shoe.style.bottom = `${shoePosition}px`;
+
+        if (attempts >= maxAttempts) {
+          resultElement.textContent = "انتهت المحاولات! بشار فاز. ❌";
+          throwButton.disabled = true;
+        }
+      }
+    }, 20);
+  }
+
+  // تحريك بشار كل ثانية
+  setInterval(moveBashar, 1000);
+
+  // إضافة حدث النقر على زر رمي الحذاء
+  throwButton.addEventListener("click", throwShoe);
 });
